@@ -1,5 +1,5 @@
 """
-One-off script to create all 5 tables in MySQL.
+One-off script to create all 6 tables in MySQL.
 Run this ONCE after your .env has real DB credentials.
 Run from inside the Salon/ folder:
 
