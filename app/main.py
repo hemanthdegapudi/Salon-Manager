@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from typing import List
 from app.database import get_db
 from app.models import Customer
 from app.schemas import CustomerCreate, CustomerResponse
@@ -27,3 +28,14 @@ def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Phone number already exists")
     db.refresh(new_customer)
     return new_customer
+
+
+@app.get("/customers", response_model=List[CustomerResponse])
+def search_customers(phone: str, db: Session = Depends(get_db)):
+    results = (
+        db.query(Customer)
+        .filter(Customer.phone_number.like(f"{phone}%"))
+        .limit(10)
+        .all()
+    )
+    return results
