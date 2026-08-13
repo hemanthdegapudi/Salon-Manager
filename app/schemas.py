@@ -65,3 +65,26 @@ class InvoiceCreateResponse(BaseModel):
     total_amount: float
     gst_amount: float
     payment_status: str
+
+
+class InvoiceResponse(BaseModel):
+    invoice_id: int
+    customer_name: str
+    customer_phone: str
+    total_amount: float
+    payment_status: str
+    cash_amount: float
+    online_amount: float
+    gst_amount: float
+    discount_amount: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class InvoiceListResponse(BaseModel):
+    invoices: List[InvoiceResponse]
+    total_invoices: int
+    total_spent: float
+

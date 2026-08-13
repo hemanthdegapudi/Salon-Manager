@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from typing import List
+from sqlalchemy import func
+from typing import List, Optional
 from app.database import get_db
 from app.models import Customer, Invoice, InvoiceItem, Settings
 from app.schemas import (
@@ -9,6 +10,8 @@ from app.schemas import (
     CustomerResponse,
     InvoiceCreate,
     InvoiceCreateResponse,
+    InvoiceResponse,
+    InvoiceListResponse,
 )
 
 app = FastAPI()
@@ -114,4 +117,52 @@ def create_invoice(payload: InvoiceCreate, db: Session = Depends(get_db)):
         total_amount=float(invoice.total_amount),
         gst_amount=float(invoice.gst_amount),
         payment_status=invoice.payment_status,
+    )
+
+
+@app.get("/invoices", response_model=InvoiceListResponse)
+def list_invoices(
+    date: Optional[str] = Query(None),
+    phone: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    if not date and not phone:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide at least one filter: date or phone",
+        )
+
+    query = db.query(Invoice, Customer).join(
+        Customer, Invoice.customer_id == Customer.id
+    )
+
+    if date:
+        query = query.filter(func.date(Invoice.created_at) == date)
+    if phone:
+        query = query.filter(Customer.phone_number == phone)
+
+    results = query.all()
+
+    invoices = [
+        InvoiceResponse(
+            invoice_id=inv.id,
+            customer_name=cust.name,
+            customer_phone=cust.phone_number,
+            total_amount=float(inv.total_amount),
+            payment_status=inv.payment_status,
+            cash_amount=float(inv.cash_amount),
+            online_amount=float(inv.online_amount),
+            gst_amount=float(inv.gst_amount),
+            discount_amount=float(inv.discount_amount),
+            created_at=inv.created_at,
+        )
+        for inv, cust in results
+    ]
+
+    total_spent = round(sum(i.total_amount for i in invoices), 2)
+
+    return InvoiceListResponse(
+        invoices=invoices,
+        total_invoices=len(invoices),
+        total_spent=total_spent,
     )
