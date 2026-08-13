@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Numeric, Boolean, DateTime, ForeignKey, Enum, CheckConstraint
+from sqlalchemy import Column, Integer, String, Numeric, Boolean, DateTime, ForeignKey, Enum, CheckConstraint, DECIMAL
+from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -82,6 +83,7 @@ class InvoiceItem(Base):
     product_id = Column(Integer, ForeignKey("product.id"), nullable=True)   # new FK
     custom_description = Column(String(150), nullable=True)
     price_charged = Column(Numeric(10, 2), nullable=False)
+    discount_percent = Column(DECIMAL(5, 2), nullable=False, default=0.00)
 
     __table_args__ = (
         CheckConstraint(
@@ -94,3 +96,12 @@ class InvoiceItem(Base):
     staff = relationship("Staff", back_populates="invoice_items")
     service = relationship("Service", back_populates="invoice_items")
     product = relationship("Product", back_populates="invoice_items")
+
+
+class Settings(Base):
+    __tablename__ = "settings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    setting_key = Column(String(50), unique=True, nullable=False)
+    setting_value = Column(String(100), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
