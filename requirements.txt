@@ -4,3 +4,5 @@ sqlalchemy==2.0.51
 pymysql==1.2.0
 python-dotenv==1.2.2
 pydantic==2.13.4
+pytest
+httpx

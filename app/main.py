@@ -16,6 +16,12 @@ from app.schemas import (
 
 app = FastAPI()
 
+@app.on_event("startup")
+def on_startup():
+    from app.database import engine
+    from app.models import Base
+    Base.metadata.create_all(bind=engine)
+
 
 @app.get("/health")
 def health_check():
