@@ -7,4 +7,5 @@ pydantic==2.13.4
 pytest
 httpx
 python-jose[cryptography]
-passlib[bcrypt]
+passlib
+bcrypt==3.2.0
