@@ -23,6 +23,24 @@ app.dependency_overrides[get_db] = override_get_db
 app.router.on_startup.clear()
 client = TestClient(app)
 
+from app.dependencies.auth import get_current_user
+from app.models.user import User, UserRole
+
+def mock_admin_user():
+    return User(
+        id=1,
+        username="testadmin",
+        password_hash="irrelevant",
+        role=UserRole.admin,
+        is_active=True,
+    )
+
+app.dependency_overrides[get_current_user] = mock_admin_user
+
+def test_login_missing_credentials():
+    response = client.post("/auth/login", json={})
+    assert response.status_code == 422  # FastAPI validation error
+
 def test_health():
     response = client.get("/health")
     assert response.status_code == 200

@@ -5,6 +5,7 @@ from sqlalchemy import func
 from typing import List, Optional
 from app.database import get_db
 from app.models import Customer, Invoice, InvoiceItem, Settings
+from app.models.user import User  # noqa: F401
 from app.schemas import (
     CustomerCreate,
     CustomerResponse,
@@ -13,8 +14,13 @@ from app.schemas import (
     InvoiceResponse,
     InvoiceListResponse,
 )
+from app.dependencies.auth import require_role
+from app.models.user import UserRole
 
 app = FastAPI()
+
+from app.routers.auth import router as auth_router
+app.include_router(auth_router)
 
 @app.on_event("startup")
 def on_startup():
@@ -29,7 +35,11 @@ def health_check():
 
 
 @app.post("/customers", response_model=CustomerResponse, status_code=201)
-def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
+def create_customer(
+    customer: CustomerCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role(UserRole.admin, UserRole.receptionist)),
+):
     new_customer = Customer(
         name=customer.name,
         phone_number=customer.phone_number,
@@ -45,7 +55,11 @@ def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/customers", response_model=List[CustomerResponse])
-def search_customers(phone: str, db: Session = Depends(get_db)):
+def search_customers(
+    phone: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role(UserRole.admin, UserRole.receptionist, UserRole.staff)),
+):
     results = (
         db.query(Customer)
         .filter(Customer.phone_number.like(f"{phone}%"))
@@ -56,7 +70,11 @@ def search_customers(phone: str, db: Session = Depends(get_db)):
 
 
 @app.post("/invoices", response_model=InvoiceCreateResponse, status_code=201)
-def create_invoice(payload: InvoiceCreate, db: Session = Depends(get_db)):
+def create_invoice(
+    payload: InvoiceCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role(UserRole.admin, UserRole.receptionist)),
+):
     # Step 1 — Fetch gst_rate from settings
     row = db.query(Settings).filter(Settings.setting_key == "gst_rate").first()
     if not row:
@@ -131,6 +149,7 @@ def list_invoices(
     date: Optional[str] = Query(None),
     phone: Optional[str] = Query(None),
     db: Session = Depends(get_db),
+    _: User = Depends(require_role(UserRole.admin, UserRole.receptionist, UserRole.staff)),
 ):
     if not date and not phone:
         raise HTTPException(
