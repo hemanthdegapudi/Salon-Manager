@@ -1,4 +1,13 @@
-# Salon Manager — POS Backend for Aniq Unisex Salon
+# Salon Manager — Aniq POS
+
+[![CI](https://github.com/hemanthdegapudi/Salon-Manager/actions/workflows/ci.yml/badge.svg)](https://github.com/hemanthdegapudi/Salon-Manager/actions)
+
+**Live API:** https://salon-manager-production-3eb3.up.railway.app
+**Docs:** https://salon-manager-production-3eb3.up.railway.app/docs
+
+> Deployed on Railway · MySQL 8.0 · FastAPI · Docker
+
+
 
 A production-shaped Point-of-Sale backend system built with Python and FastAPI,
 designed to solve a real business problem: a small salon with no reliable way to
